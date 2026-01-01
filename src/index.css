@@ -1,0 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Amarna:ital,wght@0,100..700;1,100..700&family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+@import "tailwindcss";
+
+body {
+  font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
