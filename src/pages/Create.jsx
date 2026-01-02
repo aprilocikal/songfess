@@ -9,7 +9,7 @@ export default function Create() {
     <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white border rounded-2xl p-6 space-y-4 shadow-sm">
         <h2 className="text-2xl font-bold text-green-600 text-center">
-          Kirim Lagu 🎧
+          Kirim Lagu 
         </h2>
 
         <input

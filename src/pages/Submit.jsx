@@ -18,21 +18,17 @@ export default function Submit() {
 
   /* =========================
      SAVE TO LOCAL STORAGE
-     (DIBACA OLEH History.jsx)
   ========================= */
   function saveToLocalHistory(messageId) {
     const history = JSON.parse(localStorage.getItem("songfess_history")) || [];
-
-    history.unshift({
-      id: messageId,
-      savedAt: Date.now(),
-    });
-
+    history.unshift({ id: messageId, savedAt: Date.now() });
     localStorage.setItem("songfess_history", JSON.stringify(history));
   }
 
   /* =========================
-     SEARCH SONG (iTunes via Proxy)
+     SEARCH SONG
+     - localhost  → /itunes (vite proxy)
+     - production → supabase function
   ========================= */
   useEffect(() => {
     if (query.length < 2 || query === lastSelectedQuery.current) {
@@ -42,12 +38,20 @@ export default function Submit() {
 
     const delay = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `/itunes/search?term=${encodeURIComponent(
-            query
-          )}&media=music&entity=song&limit=6`
-        );
+        const isLocalhost = location.hostname === "localhost";
+
+        const url = isLocalhost
+          ? `/itunes/search?term=${encodeURIComponent(
+              query
+            )}&media=music&entity=song&limit=6`
+          : `${
+              import.meta.env.VITE_SUPABASE_URL
+            }/functions/v1/search-song?term=${encodeURIComponent(query)}`;
+
+        // 🔥 PENTING: TANPA headers
+        const res = await fetch(url);
         const data = await res.json();
+
         setResults(data.results || []);
       } catch (err) {
         console.error("Search error:", err);
@@ -67,7 +71,7 @@ export default function Submit() {
     if (!selectedSong) {
       Swal.fire({
         icon: "warning",
-        title: "Song Required 🎵",
+        title: "Song Required",
         text: "Please choose a song first",
         confirmButtonColor: "#16a34a",
       });
@@ -95,12 +99,11 @@ export default function Submit() {
       Swal.fire({
         icon: "error",
         title: "Failed",
-        text: "Failed to send message",
+        text: error.message,
       });
       return;
     }
 
-    // 🔥 INI KUNCI HISTORY
     saveToLocalHistory(data.id);
 
     Swal.fire({
@@ -109,20 +112,7 @@ export default function Submit() {
       icon: "success",
       timer: 1600,
       showConfirmButton: false,
-      background: "#ffffff",
-      color: "#374151", // gray-700
-      iconColor: "#10b981", // emerald-500
-      customClass: {
-        popup: "rounded-2xl shadow-xl",
-        title: "text-lg font-semibold",
-        content: "text-sm text-gray-600",
-      },
-      didOpen: () => {
-        Swal.showLoading(false);
-      },
-    }).then(() => {
-      navigate("/history");
-    });
+    }).then(() => navigate("/history"));
   }
 
   return (
@@ -136,42 +126,24 @@ export default function Submit() {
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* TO */}
-            <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">
-                To
-              </label>
-              <input
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
-                placeholder="Enter recipient name..."
-                className="w-full border-2 px-5 py-4 rounded-2xl
-                focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
-                required
-              />
-            </div>
+            <input
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              placeholder="To"
+              className="w-full border-2 px-5 py-4 rounded-2xl"
+              required
+            />
 
-            {/* MESSAGE */}
-            <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">
-                Your Message
-              </label>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Write your heartfelt message..."
-                className="w-full border-2 px-5 py-4 rounded-2xl h-36 resize-none
-                focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
-                required
-              />
-            </div>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Your message"
+              className="w-full border-2 px-5 py-4 rounded-2xl h-36"
+              required
+            />
 
             {/* SONG SEARCH */}
             <div className="relative">
-              <label className="block mb-2 text-sm font-semibold text-gray-700">
-                Choose a Song
-              </label>
-
               <input
                 value={query}
                 onChange={(e) => {
@@ -179,11 +151,9 @@ export default function Submit() {
                   setSelectedSong(null);
                 }}
                 placeholder="Search for a song..."
-                className="w-full border-2 px-5 py-4 rounded-2xl
-                focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
+                className="w-full border-2 px-5 py-4 rounded-2xl"
               />
 
-              {/* DROPDOWN */}
               {results.length > 0 && (
                 <div className="absolute z-50 mt-2 w-full bg-white rounded-2xl shadow-xl max-h-72 overflow-y-auto">
                   {results.map((song) => (
@@ -196,12 +166,11 @@ export default function Submit() {
                         lastSelectedQuery.current = song.trackName;
                         setResults([]);
                       }}
-                      className="flex items-center gap-4 w-full px-5 py-4 hover:bg-emerald-50 text-left"
+                      className="flex items-center gap-4 w-full px-5 py-4 hover:bg-emerald-50"
                     >
                       <img
                         src={song.artworkUrl100}
                         className="w-12 h-12 rounded-xl"
-                        alt=""
                       />
                       <div>
                         <p className="font-semibold text-sm">
@@ -217,38 +186,17 @@ export default function Submit() {
               )}
             </div>
 
-            {/* SELECTED SONG */}
             {selectedSong && (
-              <div className="bg-emerald-50 p-4 rounded-2xl space-y-3">
-                <div className="flex items-center gap-4">
-                  <img
-                    src={selectedSong.artworkUrl100}
-                    className="w-16 h-16 rounded-xl"
-                    alt=""
-                  />
-                  <div>
-                    <p className="font-bold">{selectedSong.trackName}</p>
-                    <p className="text-sm text-gray-600">
-                      {selectedSong.artistName}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedSong.previewUrl && (
-                  <audio
-                    controls
-                    src={selectedSong.previewUrl}
-                    className="w-full"
-                  />
-                )}
-              </div>
+              <audio
+                controls
+                src={selectedSong.previewUrl}
+                className="w-full"
+              />
             )}
 
-            {/* SUBMIT */}
             <button
               disabled={loading}
-              className="w-full bg-gradient-to-r from-emerald-600 to-green-600
-              text-white py-4 rounded-2xl font-bold disabled:opacity-50"
+              className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold"
             >
               {loading ? "Sending..." : "Send Message"}
             </button>

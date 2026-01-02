@@ -184,9 +184,9 @@ export default function View() {
               <button
                 onClick={handleShare}
                 className="px-8 py-3 bg-white border-2 border-emerald-300
-            text-emerald-700 rounded-full font-semibold
-            flex items-center justify-center gap-2
-            hover:bg-emerald-50 hover:scale-105 transition-all duration-300 shadow-md"
+                  text-emerald-700 rounded-full font-semibold
+                  flex items-center justify-center gap-2
+                  hover:bg-emerald-50 hover:scale-105 transition-all duration-300 shadow-md"
               >
                 <FiShare2 />
                 Share Link
