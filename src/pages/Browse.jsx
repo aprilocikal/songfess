@@ -12,14 +12,14 @@ import {
 
 export default function Browse() {
   const [query, setQuery] = useState("");
-  const [messages, setMessages] = useState([]);   // 🔒 cache data
-  const [filtered, setFiltered] = useState([]);   // 🔥 hasil search saja
+  const [messages, setMessages] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchMessages();
 
-    // REALTIME (DELETE / UPDATE)
+    // Real-time subscription
     const channel = supabase
       .channel("messages-realtime")
       .on(
@@ -41,9 +41,7 @@ export default function Browse() {
   async function fetchMessages() {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*");
+    const { data, error } = await supabase.from("messages").select("*");
 
     if (error) {
       console.error(error);
@@ -52,7 +50,7 @@ export default function Browse() {
     }
 
     setMessages(data || []);
-    setFiltered([]); // ✅ KOSONGKAN → tidak tampil apa-apa
+    setFiltered([]);
     setLoading(false);
   }
 
@@ -60,7 +58,7 @@ export default function Browse() {
     setQuery(value);
 
     if (!value.trim()) {
-      setFiltered([]); // 🔥 kosong kalau input kosong
+      setFiltered([]);
       return;
     }
 
@@ -78,119 +76,123 @@ export default function Browse() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       <Navbar />
 
-      <div className="max-w-4xl mx-auto mt-12 px-6 pb-12">
-        {/* HEADER */}
-        <div className="text-center mb-10">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 bg-clip-text text-transparent mb-3">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 lg:pt-12 pb-12 sm:pb-16">
+        {/* Header */}
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent mb-2 sm:mb-3">
             Browse Messages
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Type a name or keyword to find a message
           </p>
         </div>
 
-        {/* SEARCH */}
-        <div className="relative mb-10">
-          <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-            <FiSearch className="text-2xl text-gray-400" />
+        {/* Search Bar */}
+        <div className="relative mb-8 sm:mb-10">
+          <div className="absolute inset-y-0 left-4 sm:left-5 flex items-center pointer-events-none">
+            <FiSearch className="text-xl sm:text-2xl text-gray-400" />
           </div>
 
           <input
             placeholder="Search by name, message, song, or artist..."
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full bg-white/80 border-2 border-gray-200 pl-16 pr-14 py-5 rounded-2xl focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 outline-none shadow-lg text-lg"
+            className="w-full bg-white/80 backdrop-blur-sm border-2 border-gray-200 pl-12 sm:pl-16 pr-12 sm:pr-14 py-3.5 sm:py-4 lg:py-5 rounded-xl sm:rounded-2xl focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 outline-none shadow-lg text-base sm:text-lg transition-all"
           />
 
           {query && (
             <button
               onClick={() => handleSearch("")}
-              className="absolute inset-y-0 right-5 flex items-center text-gray-400 hover:text-emerald-600"
+              className="absolute inset-y-0 right-4 sm:right-5 flex items-center text-gray-400 hover:text-emerald-600 transition-colors"
             >
-              <FiX size={20} />
+              <FiX className="w-5 h-5" />
             </button>
           )}
         </div>
 
-        {/* STATE: BELUM SEARCH */}
+        {/* Empty State - No Search */}
         {!query && !loading && (
-          <div className="text-center py-24">
-            <FiSearch className="mx-auto text-6xl text-emerald-300 mb-4" />
-            <p className="text-gray-600 text-lg">
+          <div className="text-center py-16 sm:py-20 lg:py-24">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-emerald-100 rounded-2xl flex items-center justify-center">
+              <FiSearch className="text-4xl sm:text-5xl text-emerald-400" />
+            </div>
+            <p className="text-base sm:text-lg text-gray-600">
               Start typing to search messages
             </p>
           </div>
         )}
 
-        {/* STATE: LOADING */}
+        {/* Loading State */}
         {loading && (
-          <div className="text-center py-20">
-            <div className="inline-block w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
-            <p className="mt-4 text-gray-600">Loading messages...</p>
+          <div className="text-center py-16 sm:py-20">
+            <div className="inline-block w-14 h-14 sm:w-16 sm:h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+            <p className="mt-4 text-sm sm:text-base text-gray-600">
+              Loading messages...
+            </p>
           </div>
         )}
 
-        {/* RESULTS */}
-        <div className="space-y-5">
+        {/* Results */}
+        <div className="space-y-4 sm:space-y-5">
           {filtered.map((m) => (
             <Link
               key={m.id}
               to={`/view/${m.id}`}
-              className="block bg-white/80 border-2 border-white/50 rounded-3xl p-6 hover:shadow-xl hover:border-emerald-300 transition group"
+              className="block bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl sm:rounded-3xl p-4 sm:p-5 lg:p-6 hover:shadow-xl hover:border-emerald-300 transition-all duration-300 group"
             >
               <div className="flex items-center gap-2 mb-3">
-                <FiMessageCircle className="text-emerald-500" />
-                <p className="font-bold text-gray-800">
-                  To:{" "}
-                  <span className="text-emerald-600">
-                    {m.recipient}
-                  </span>
+                <FiMessageCircle className="text-base sm:text-lg text-emerald-500 flex-shrink-0" />
+                <p className="font-bold text-sm sm:text-base text-gray-800">
+                  To: <span className="text-emerald-600">{m.recipient}</span>
                 </p>
               </div>
 
-              <p className="italic text-gray-700 mb-4 line-clamp-3">
+              <p className="italic text-sm sm:text-base text-gray-700 mb-4 line-clamp-3 leading-relaxed">
                 "{m.message}"
               </p>
 
               {m.song_title && (
-                <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl sm:rounded-2xl border border-emerald-100/50">
                   <img
                     src={m.cover}
-                    className="w-14 h-14 rounded-xl"
-                    alt=""
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl object-cover shadow-sm flex-shrink-0"
+                    alt={m.song_title}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold truncate">
+                    <p className="font-semibold text-sm sm:text-base text-gray-800 truncate">
                       {m.song_title}
                     </p>
-                    <p className="text-sm text-gray-600 truncate">
+                    <p className="text-xs sm:text-sm text-gray-600 truncate">
                       {m.artist}
                     </p>
                   </div>
-                  <FiMusic className="text-emerald-500 text-xl" />
+                  <FiMusic className="text-lg sm:text-xl text-emerald-500 flex-shrink-0" />
                 </div>
               )}
 
-              <div className="mt-4 flex items-center justify-center gap-2 text-emerald-600 opacity-0 group-hover:opacity-100 transition">
-                <span className="text-sm font-semibold">
+              <div className="mt-3 sm:mt-4 flex items-center justify-center gap-2 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-xs sm:text-sm font-semibold">
                   View Details
                 </span>
-                <FiArrowRight />
+                <FiArrowRight className="text-sm" />
               </div>
             </Link>
           ))}
         </div>
 
-        {/* STATE: TIDAK ADA HASIL */}
+        {/* Empty State - No Results */}
         {query && !loading && filtered.length === 0 && (
-          <div className="text-center py-20">
-            <h3 className="text-xl font-bold text-gray-700 mb-2">
+          <div className="text-center py-16 sm:py-20">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-gray-100 rounded-2xl flex items-center justify-center">
+              <FiSearch className="text-4xl sm:text-5xl text-gray-300" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-700 mb-2">
               No messages found
             </h3>
-            <p className="text-gray-500">
+            <p className="text-sm sm:text-base text-gray-500">
               Try another name or keyword
             </p>
           </div>
