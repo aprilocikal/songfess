@@ -23,14 +23,27 @@ export default function Submit() {
 
   const lastSelectedQuery = useRef("");
 
-  // Save to localStorage
+  /* =========================
+     SAVE TO LOCAL STORAGE
+  ========================= */
   function saveToLocalHistory(messageId) {
-    const history = JSON.parse(localStorage.getItem("songfess_history")) || [];
-    history.unshift({ id: messageId, savedAt: Date.now() });
-    localStorage.setItem("songfess_history", JSON.stringify(history));
+    const history =
+      JSON.parse(localStorage.getItem("songfess_history")) || [];
+
+    history.unshift({
+      id: messageId,
+      savedAt: Date.now(),
+    });
+
+    localStorage.setItem(
+      "songfess_history",
+      JSON.stringify(history)
+    );
   }
 
-  // Search song from iTunes API
+  /* =========================
+     SEARCH SONG
+  ========================= */
   useEffect(() => {
     if (query.length < 2 || query === lastSelectedQuery.current) {
       setResults([]);
@@ -62,7 +75,9 @@ export default function Submit() {
     return () => clearTimeout(delay);
   }, [query]);
 
-  // Submit form
+  /* =========================
+     SUBMIT
+  ========================= */
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -72,7 +87,6 @@ export default function Submit() {
         title: "Song Required",
         text: "Please choose a song first",
         confirmButtonColor: "#10b981",
-        iconColor: "#f59e0b",
       });
       return;
     }
@@ -99,7 +113,6 @@ export default function Submit() {
         icon: "error",
         title: "Failed",
         text: error.message,
-        confirmButtonColor: "#10b981",
       });
       return;
     }
@@ -107,10 +120,10 @@ export default function Submit() {
     saveToLocalHistory(data.id);
 
     Swal.fire({
-      title: "Message Sent! 🎉",
+      title: "Message Sent",
       text: "Your message has been successfully delivered.",
       icon: "success",
-      timer: 1800,
+      timer: 1600,
       showConfirmButton: false,
       iconColor: "#10b981",
     }).then(() => navigate("/history"));
@@ -124,19 +137,18 @@ export default function Submit() {
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl border border-gray-100 p-5 sm:p-6 lg:p-8">
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg">
               <FiMusic className="text-2xl sm:text-3xl text-white" />
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent mb-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
               Send a Message
             </h1>
-            <p className="text-xs sm:text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
               Share your feelings through music
             </p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Recipient */}
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
@@ -146,8 +158,7 @@ export default function Submit() {
               <input
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
-                placeholder="Who is this message for?"
-                className="w-full border-2 border-gray-200 px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 outline-none text-sm sm:text-base transition-all"
+                className="w-full border-2 border-gray-200 px-5 py-3.5 rounded-2xl focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 outline-none transition-all"
                 required
               />
             </div>
@@ -161,8 +172,7 @@ export default function Submit() {
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Write your heartfelt message here..."
-                className="w-full border-2 border-gray-200 px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl h-28 sm:h-32 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 outline-none resize-none text-sm sm:text-base transition-all"
+                className="w-full border-2 border-gray-200 px-5 py-3.5 rounded-2xl h-32 resize-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 outline-none transition-all"
                 required
               />
             </div>
@@ -173,6 +183,7 @@ export default function Submit() {
                 <FiSearch className="text-emerald-600" />
                 Choose a Song
               </label>
+
               <div className="relative">
                 <input
                   value={query}
@@ -180,13 +191,11 @@ export default function Submit() {
                     setQuery(e.target.value);
                     setSelectedSong(null);
                   }}
-                  placeholder="Search for a song..."
-                  className="w-full border-2 border-gray-200 px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 outline-none text-sm sm:text-base transition-all"
+                  className="w-full border-2 border-gray-200 px-5 py-3.5 rounded-2xl focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 outline-none transition-all"
                 />
 
-                {/* Search Results Dropdown */}
                 {results.length > 0 && (
-                  <div className="absolute z-50 mt-2 w-full bg-white rounded-xl sm:rounded-2xl shadow-2xl border border-gray-100 max-h-64 sm:max-h-72 overflow-y-auto">
+                  <div className="absolute z-50 mt-2 w-full bg-white rounded-2xl shadow-2xl border border-gray-100 max-h-72 overflow-y-auto">
                     {results.map((song) => (
                       <button
                         key={song.trackId}
@@ -197,20 +206,29 @@ export default function Submit() {
                           lastSelectedQuery.current = song.trackName;
                           setResults([]);
                         }}
-                        className="flex items-center gap-3 sm:gap-4 w-full px-4 sm:px-5 py-3 sm:py-4 hover:bg-emerald-50 transition-colors text-left border-b border-gray-50 last:border-0"
+                        className="flex items-center gap-4 w-full px-5 py-4 hover:bg-emerald-50 transition text-left border-b last:border-0"
                       >
                         <img
                           src={song.artworkUrl100}
-                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl object-cover shadow-sm flex-shrink-0"
+                          className="w-14 h-14 rounded-xl object-cover"
                           alt={song.trackName}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm sm:text-base text-gray-800 truncate">
+                          <p className="font-semibold truncate">
                             {song.trackName}
                           </p>
-                          <p className="text-xs sm:text-sm text-gray-500 truncate">
+                          <p className="text-sm text-gray-500 truncate mb-1">
                             {song.artistName}
                           </p>
+
+                          {song.previewUrl && (
+                            <audio
+                              controls
+                              src={song.previewUrl}
+                              className="w-full h-7"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          )}
                         </div>
                       </button>
                     ))}
@@ -220,42 +238,57 @@ export default function Submit() {
 
               {/* Selected Song Preview */}
               {selectedSong && (
-                <div className="mt-3 p-3 sm:p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl sm:rounded-2xl border border-emerald-100">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100">
+                  <div className="flex items-center gap-2 mb-3">
                     <FiCheck className="text-emerald-600" />
-                    <p className="text-xs sm:text-sm font-semibold text-emerald-700">
+                    <p className="text-sm font-semibold text-emerald-700">
                       Selected Song
                     </p>
                   </div>
-                  <audio
-                    controls
-                    src={selectedSong.previewUrl}
-                    className="w-full h-8 sm:h-10"
-                    style={{ maxHeight: "40px" }}
-                  />
+
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={selectedSong.artworkUrl100}
+                      className="w-16 h-16 rounded-xl object-cover shadow-sm"
+                      alt={selectedSong.trackName}
+                    />
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">
+                        {selectedSong.trackName}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate mb-2">
+                        {selectedSong.artistName}
+                      </p>
+
+                      {selectedSong.previewUrl ? (
+                        <audio
+                          controls
+                          src={selectedSong.previewUrl}
+                          className="w-full h-8"
+                        />
+                      ) : (
+                        <p className="text-xs text-gray-400 italic">
+                          Preview not available
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3 sm:py-3.5 lg:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base shadow-lg hover:shadow-xl hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-300"
+              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] disabled:opacity-60 transition-all"
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Sending...
-                </span>
-              ) : (
-                "Send Message"
-              )}
+              {loading ? "Sending..." : "Send Message"}
             </button>
           </form>
 
-          {/* Helper Text */}
-          <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-gray-500">
             Your message will be saved in history for 7 days
           </p>
         </div>
