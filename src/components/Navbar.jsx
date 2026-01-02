@@ -15,7 +15,6 @@ export default function Navbar() {
     <header className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50 shadow-sm">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* LOGO */}
           <NavLink to="/" className="flex items-center gap-2 sm:gap-3 group">
             <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl overflow-hidden shadow-md group-hover:shadow-lg transform group-hover:scale-110 transition-all duration-300 bg-white">
               <img
