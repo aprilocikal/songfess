@@ -17,9 +17,14 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* LOGO */}
           <NavLink to="/" className="flex items-center gap-2 sm:gap-3 group">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl sm:rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-md group-hover:shadow-lg">
-              <FiMusic className="text-white text-lg sm:text-xl" />
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl overflow-hidden shadow-md group-hover:shadow-lg transform group-hover:scale-110 transition-all duration-300 bg-white">
+              <img
+                src="/logo-songfess.png"
+                alt="SongFess Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
+
             <span className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
               SongFess
             </span>
