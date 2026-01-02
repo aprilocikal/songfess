@@ -1,33 +1,41 @@
-import { useEffect, useState } from "react"
-import { supabase } from "../lib/supabase"
-import Navbar from "../components/Navbar"
-import { Link } from "react-router-dom"
-import { FiMessageCircle} from "react-icons/fi"
-import { FiMenu, FiX } from "react-icons/fi"
-
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import Navbar from "../components/Navbar";
+import { Link } from "react-router-dom";
+import { FiMessageCircle } from "react-icons/fi";
 
 export default function Home() {
-  const [messages, setMessages] = useState([])
-  const [activeFeature, setActiveFeature] = useState(null) // ✅ TAMBAHAN
-  
+  const [messages, setMessages] = useState([]);
+  const [activeFeature, setActiveFeature] = useState(null);
 
   useEffect(() => {
-    fetchMessages()
-  }, [])
+    fetchMessages();
+  }, []);
 
   async function fetchMessages() {
     const { data } = await supabase
       .from("messages")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(20)
+      .limit(20);
 
-    if (data) setMessages(data)
+    if (data) setMessages(data);
   }
 
-  const half = Math.ceil(messages.length / 2)
-  const topRow = messages.slice(0, half)
-  const bottomRow = messages.slice(half)
+  if (messages.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-50">
+        <Navbar />
+        <div className="flex items-center justify-center h-[60vh] text-gray-400">
+          Loading live messages...
+        </div>
+      </div>
+    );
+  }
+
+  const half = Math.ceil(messages.length / 2);
+  const topRow = messages.slice(0, half);
+  const bottomRow = messages.slice(half);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50">
@@ -47,52 +55,54 @@ export default function Home() {
         <div className="grid md:grid-cols-3 gap-8 mb-24">
           <Feature
             id="share"
-            active={activeFeature}
-            onClick={setActiveFeature}
             title="Share Messages"
             desc="Choose a song and write a heartfelt message."
+            active={activeFeature}
+            onClick={setActiveFeature}
           />
           <Feature
             id="browse"
-            active={activeFeature}
-            onClick={setActiveFeature}
             title="Browse Messages"
             desc="Find messages written by others."
+            active={activeFeature}
+            onClick={setActiveFeature}
           />
           <Feature
             id="listen"
-            active={activeFeature}
-            onClick={setActiveFeature}
             title="Listen & Feel"
             desc="Read stories and feel the music."
+            active={activeFeature}
+            onClick={setActiveFeature}
           />
         </div>
       </section>
 
-      {/* PUBLIC MESSAGES */}
+      {/* LIVE MESSAGES */}
       <section className="py-28 bg-gradient-to-b from-emerald-50/70 via-white/80 to-emerald-50/70">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-2xl font-bold text-emerald-600 mb-2">
-               Live Messages
+              Live Messages
             </h2>
             <p className="text-gray-600">
               Messages flowing slowly from real people
             </p>
           </div>
 
+          {/* ROW ATAS */}
           <div className="relative overflow-hidden mb-14 rounded-3xl bg-white/50 py-6">
-            <div className="marquee-right">
+            <div className="marquee-right flex gap-6 px-4">
               {topRow.concat(topRow).map((m, i) => (
-                <MessageCard key={`${m.id}-top-${i}`} message={m} />
+                <MessageCard key={`top-${m.id}-${i}`} message={m} />
               ))}
             </div>
           </div>
 
+          {/* ROW BAWAH */}
           <div className="relative overflow-hidden rounded-3xl bg-white/50 py-6">
-            <div className="marquee-left">
+            <div className="marquee-left flex gap-6 px-4">
               {bottomRow.concat(bottomRow).map((m, i) => (
-                <MessageCard key={`${m.id}-bottom-${i}`} message={m} />
+                <MessageCard key={`bottom-${m.id}-${i}`} message={m} />
               ))}
             </div>
           </div>
@@ -115,7 +125,7 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* ANIMATION */}
+      {/* MARQUEE ANIMATION */}
       <style>{`
         @keyframes scroll-right {
           from { transform: translateX(0); }
@@ -127,46 +137,56 @@ export default function Home() {
           to { transform: translateX(0); }
         }
 
-        .marquee-right,
-        .marquee-left {
-          display: flex;
-          gap: 1.5rem;
-          width: max-content;
-          will-change: transform;
+        /* DESKTOP */
+        @media (min-width: 768px) {
+          .marquee-right {
+            animation: scroll-right 50s linear infinite;
+            width: max-content;
+          }
+
+          .marquee-left {
+            animation: scroll-left 50s linear infinite;
+            width: max-content;
+          }
         }
 
-        .marquee-right {
-          animation: scroll-right 50s linear infinite;
+        /* MOBILE (AUTO JALAN PELAN) */
+        @media (max-width: 767px) {
+          .marquee-right {
+            animation: scroll-right 90s linear infinite;
+            width: max-content;
+          }
+
+          .marquee-left {
+            animation: scroll-left 90s linear infinite;
+            width: max-content;
+          }
         }
 
-        .marquee-left {
-          animation: scroll-left 50s linear infinite;
-        }
+        
       `}</style>
     </div>
-  )
+  );
 }
 
-/* FEATURE */
+/* FEATURE CARD */
 function Feature({ id, title, desc, active, onClick }) {
-  const isActive = active === id
+  const isActive = active === id;
 
   return (
     <button
       onClick={() => onClick(id)}
-      className={`
-        text-left bg-white/80 rounded-3xl p-8 shadow-md border-2 transition-all
-        ${isActive
-          ? "border-emerald-500 shadow-emerald-200 scale-[1.03]"
-          : "border-emerald-100 hover:shadow-xl hover:border-emerald-300"}
-      `}
+      className={`bg-white/80 rounded-3xl p-8 shadow-md border-2 transition-all text-left
+        ${
+          isActive
+            ? "border-emerald-500 shadow-emerald-200 scale-[1.03]"
+            : "border-emerald-100 hover:shadow-xl hover:border-emerald-300"
+        }`}
     >
-      <h3 className="font-bold text-xl text-gray-800 mb-3">
-        {title}
-      </h3>
+      <h3 className="font-bold text-xl text-gray-800 mb-3">{title}</h3>
       <p className="text-gray-600">{desc}</p>
     </button>
-  )
+  );
 }
 
 /* MESSAGE CARD */
@@ -178,7 +198,7 @@ function MessageCard({ message }) {
     >
       <p className="flex items-center gap-2 text-sm text-gray-500 mb-2">
         <FiMessageCircle className="text-emerald-500" />
-        <span>To: {message.recipient}</span>
+        To: {message.recipient}
       </p>
 
       <p className="italic text-gray-800 mb-4 line-clamp-3">
@@ -187,22 +207,19 @@ function MessageCard({ message }) {
 
       {message.song_title && (
         <div className="flex items-center gap-3 bg-emerald-50/60 p-3 rounded-xl">
-          
           <img
             src={message.cover}
-            className="w-12 h-12 rounded-lg"
             alt=""
+            className="w-12 h-12 rounded-lg object-cover"
           />
           <div className="min-w-0">
             <p className="font-semibold text-sm truncate">
               {message.song_title}
             </p>
-            <p className="text-xs text-gray-500 truncate">
-              {message.artist}
-            </p>
+            <p className="text-xs text-gray-500 truncate">{message.artist}</p>
           </div>
         </div>
       )}
     </Link>
-  )
+  );
 }
