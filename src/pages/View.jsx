@@ -44,7 +44,7 @@ export default function View() {
       Swal.fire({
         icon: "success",
         title: "Link Copied!",
-        text: "Share this message with someone 💚",
+        text: "Share this message with someone ",
         timer: 1500,
         showConfirmButton: false,
         iconColor: "#10b981",
