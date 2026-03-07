@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import Navbar from "../components/Navbar";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FiMessageCircle,
   FiMusic,
@@ -10,7 +10,118 @@ import {
   FiSend,
 } from "react-icons/fi";
 
+/* ─── DRAGGABLE MARQUEE ─── */
+function DraggableMarquee({ children, direction = "right" }) {
+  const trackRef = useRef(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const dragStartOffset = useRef(0);
+  const offset = useRef(0);
+  const raf = useRef(null);
+  const speedRef = useRef(0);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    // Calculate px-per-frame to match original CSS durations:
+    // desktop = 50s, mobile (≤640px) = 80s, at 60fps
+    const calcSpeed = () => {
+      const half = track.scrollWidth / 2;
+      const duration = window.innerWidth <= 640 ? 80 : 50;
+      const pxPerFrame = half / (duration * 60);
+      speedRef.current = direction === "right" ? -pxPerFrame : pxPerFrame;
+    };
+
+    calcSpeed();
+    window.addEventListener("resize", calcSpeed);
+
+    // "left" starts at -half so it mirrors the original CSS translateX(-50%)
+    if (direction === "left") {
+      offset.current = -(track.scrollWidth / 2);
+      track.style.transform = `translateX(${offset.current}px)`;
+    }
+
+    const animate = () => {
+      if (!isDragging.current) {
+        offset.current += speedRef.current;
+
+        const half = track.scrollWidth / 2;
+        if (direction === "right" && offset.current <= -half) offset.current = 0;
+        if (direction === "left" && offset.current >= 0) offset.current = -half;
+
+        track.style.transform = `translateX(${offset.current}px)`;
+      }
+      raf.current = requestAnimationFrame(animate);
+    };
+
+    raf.current = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(raf.current);
+      window.removeEventListener("resize", calcSpeed);
+    };
+  }, [direction]);
+
+  const getClientX = (e) =>
+    e.touches ? e.touches[0]?.clientX ?? 0 : e.clientX;
+
+  const onDown = (e) => {
+    isDragging.current = true;
+    startX.current = getClientX(e);
+    dragStartOffset.current = offset.current;
+    trackRef.current.style.cursor = "grabbing";
+  };
+
+  const onMove = (e) => {
+    if (!isDragging.current) return;
+    offset.current = dragStartOffset.current + (getClientX(e) - startX.current);
+    trackRef.current.style.transform = `translateX(${offset.current}px)`;
+  };
+
+  const onUp = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    trackRef.current.style.cursor = "grab";
+    // Snap offset into valid loop range
+    const half = trackRef.current.scrollWidth / 2;
+    while (offset.current > 0) offset.current -= half;
+    while (offset.current < -half) offset.current += half;
+  };
+
+  return (
+    <div
+      className="relative overflow-hidden select-none"
+      style={{ cursor: "grab" }}
+      onMouseDown={onDown}
+      onMouseMove={onMove}
+      onMouseUp={onUp}
+      onMouseLeave={onUp}
+      onTouchStart={onDown}
+      onTouchMove={onMove}
+      onTouchEnd={onUp}
+    >
+      <div
+        ref={trackRef}
+        className="flex gap-4 sm:gap-6 px-2 sm:px-4 will-change-transform"
+        style={{ width: "max-content" }}
+        onClick={(e) => {
+          // Block link navigation if user dragged
+          if (Math.abs(offset.current - dragStartOffset.current) > 5) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ─── HOME ─── */
 export default function Home() {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [activeFeature, setActiveFeature] = useState(null);
 
@@ -70,7 +181,10 @@ export default function Home() {
             title="Share Messages"
             desc="Choose a song and write a heartfelt message to someone special."
             active={activeFeature}
-            onClick={setActiveFeature}
+            onClick={(id) => {
+              setActiveFeature(id);
+              setTimeout(() => navigate("/submit"), 250);
+            }}
           />
           <Feature
             id="browse"
@@ -78,7 +192,10 @@ export default function Home() {
             title="Browse Messages"
             desc="Discover messages from others and feel their emotions."
             active={activeFeature}
-            onClick={setActiveFeature}
+            onClick={(id) => {
+              setActiveFeature(id);
+              setTimeout(() => navigate("/browse"), 250);
+            }}
           />
           <Feature
             id="listen"
@@ -86,13 +203,24 @@ export default function Home() {
             title="Listen & Feel"
             desc="Read stories and experience the soundtrack of feelings."
             active={activeFeature}
-            onClick={setActiveFeature}
+            onClick={(id) => {
+              setActiveFeature(id);
+              const liveSection = document.getElementById("live-messages");
+              if (liveSection) {
+                setTimeout(() => {
+                  liveSection.scrollIntoView({ behavior: "smooth" });
+                  setActiveFeature(null);
+                }, 250);
+              }
+            }}
           />
         </div>
       </section>
 
       {/* LIVE MESSAGES SECTION */}
-      <section className="py-16 sm:py-20 lg:py-28 bg-gradient-to-b from-white/50 via-emerald-50/30 to-white/50">
+      <section
+        id="live-messages"
+        className="py-16 sm:py-20 lg:py-28 bg-gradient-to-b from-white/50 via-emerald-50/30 to-white/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-12 lg:mb-16">
             <div className="inline-block mb-4">
@@ -109,21 +237,21 @@ export default function Home() {
           </div>
 
           {/* TOP ROW */}
-          <div className="relative overflow-hidden mb-8 sm:mb-10 lg:mb-14 rounded-2xl sm:rounded-3xl bg-white/40 backdrop-blur-sm py-4 sm:py-6 shadow-sm">
-            <div className="marquee-right flex gap-4 sm:gap-6 px-2 sm:px-4">
+          <div className="mb-8 sm:mb-10 lg:mb-14 rounded-2xl sm:rounded-3xl bg-white/40 backdrop-blur-sm py-4 sm:py-6 shadow-sm">
+            <DraggableMarquee direction="right">
               {topRow.concat(topRow).map((m, i) => (
                 <MessageCard key={`top-${m.id}-${i}`} message={m} />
               ))}
-            </div>
+            </DraggableMarquee>
           </div>
 
           {/* BOTTOM ROW */}
-          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white/40 backdrop-blur-sm py-4 sm:py-6 shadow-sm">
-            <div className="marquee-left flex gap-4 sm:gap-6 px-2 sm:px-4">
+          <div className="rounded-2xl sm:rounded-3xl bg-white/40 backdrop-blur-sm py-4 sm:py-6 shadow-sm">
+            <DraggableMarquee direction="left">
               {bottomRow.concat(bottomRow).map((m, i) => (
                 <MessageCard key={`bottom-${m.id}-${i}`} message={m} />
               ))}
-            </div>
+            </DraggableMarquee>
           </div>
         </div>
       </section>
@@ -139,50 +267,17 @@ export default function Home() {
           </p>
           <Link
             to="/submit"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white px-8 py-3 sm:px-10 sm:py-4 rounded-full font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
-          >
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white px-8 py-3 sm:px-10 sm:py-4 rounded-full font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300">
             <span>Create Your Message</span>
             <FiSend className="text-lg" />
           </Link>
         </div>
       </section>
-
-      {/* MARQUEE ANIMATION */}
-      <style>{`
-        @keyframes scroll-right {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-
-        @keyframes scroll-left {
-          from { transform: translateX(-50%); }
-          to { transform: translateX(0); }
-        }
-
-        .marquee-right {
-          animation: scroll-right 50s linear infinite;
-          width: max-content;
-        }
-
-        .marquee-left {
-          animation: scroll-left 50s linear infinite;
-          width: max-content;
-        }
-
-        @media (max-width: 640px) {
-          .marquee-right,
-          .marquee-left {
-            animation-duration: 80s;
-          }
-        }
-
-       
-      `}</style>
     </div>
   );
 }
 
-/* FEATURE CARD COMPONENT */
+/* ─── FEATURE CARD ─── */
 function Feature({ id, icon, title, desc, active, onClick }) {
   const isActive = active === id;
 
@@ -193,15 +288,13 @@ function Feature({ id, icon, title, desc, active, onClick }) {
         isActive
           ? "border-emerald-500 shadow-emerald-200/50 scale-105 bg-white"
           : "border-gray-200 hover:border-emerald-300"
-      }`}
-    >
+      }`}>
       <div
         className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-5 transition-all duration-300 ${
           isActive
             ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md"
             : "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100"
-        }`}
-      >
+        }`}>
         {icon && <div className="text-2xl sm:text-3xl">{icon}</div>}
       </div>
       <h3 className="font-bold text-lg sm:text-xl text-gray-800 mb-2 sm:mb-3">
@@ -214,13 +307,12 @@ function Feature({ id, icon, title, desc, active, onClick }) {
   );
 }
 
-/* MESSAGE CARD COMPONENT */
+/* ─── MESSAGE CARD ─── */
 function MessageCard({ message }) {
   return (
     <Link
       to={`/view/${message.id}`}
-      className="flex-shrink-0 w-64 sm:w-72 lg:w-80 bg-white/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-lg border border-gray-100 hover:shadow-2xl hover:scale-105 hover:border-emerald-200 transition-all duration-300 group"
-    >
+      className="flex-shrink-0 w-64 sm:w-72 lg:w-80 bg-white/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-lg border border-gray-100 hover:shadow-2xl hover:scale-105 hover:border-emerald-200 transition-all duration-300 group">
       <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
         <FiMessageCircle className="text-emerald-500 text-base sm:text-lg flex-shrink-0" />
         <span className="font-medium">
